@@ -6,7 +6,7 @@ let _ = require('lodash');
 // simple find
 module.exports.find  = (gcid, directory, done) => {
   let cats = [];
-  csv().fromFile('./taxonomy.csv')
+  csv().fromFile(`${__dirname}/taxonomy.csv`)
   .on('json', data => {
     cats.push(data);
   })
