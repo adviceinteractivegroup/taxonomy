@@ -1,7 +1,7 @@
 'use strict';
 
-let csv = require('csvtojson');
-let _ = require('lodash');
+const csv = require('csvtojson');
+const _ = require('lodash');
 
 // simple find
 const find = async (gcid, directory, done) => {
