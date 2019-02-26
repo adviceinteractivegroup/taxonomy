@@ -1,28 +1,30 @@
 'use strict';
 
-let csv = require('csvtojson');
-let _ = require('lodash');
+const csv = require('csvtojson');
+const _ = require('lodash');
 
 // simple find
-module.exports.find  = (gcid, directory, done) => {
-  let cats = [];
-  csv().fromFile(`${__dirname}/taxonomy.csv`)
-  .on('json', data => {
-    cats.push(data);
-  })
-  .on('done', err => {
-    if (err) {
+const find = (gcid, directory, done) => {
+  csv()
+    .fromFile(`${__dirname}/taxonomy.csv`)
+    .then((cats) => {
+      const google = _.filter(cats, {
+        gcid: gcid
+      });
+      if (google.length < 1) {
+        return done(`Could not find gcid: "${gcid}"`)
+      }
+
+      if (_.get(google, `0.${directory}`)) {
+        return done(null, _.get(google, `0.${directory}`));
+      }
+      return done(`No mapping for directory: "${directory}"`);
+    })
+    .catch((err) => {
       return done(err);
-    }
+    });
+};
 
-    let google = _.filter(cats, {gcid: gcid});
-    if (google.length < 1) {
-      return done('could not find gcid')
-    }
-
-    if (_.get(google, `0.${directory}`)) {
-      return done(null, _.get(google, `0.${directory}`));
-    }
-    return done('no mapping for directory');
-  });
+module.exports = {
+  find
 };
