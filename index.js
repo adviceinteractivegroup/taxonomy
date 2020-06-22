@@ -53,9 +53,41 @@ const findBestGcidMatch = ({ directory, categories }) => {
   });
 };
 
-
+/* example of use:
+getArrayOfMatches({
+  directoryIn: 'google',
+  directoryOut: 'gcid',
+  categories: [
+    "car wash",
+    "Lighting Manufacturer",
+    "lighting manufacturer",
+    "License bureau"
+  ]
+});
+*/
+const getArrayOfMatches = ({ directoryIn, directoryOut, categories }) => {
+  return new Promise((resolve, reject) => {
+    return csv()
+      .fromFile(`${__dirname}/taxonomy.csv`)
+      .then(cats => {
+        let categoriesFound = [];
+        categories.forEach(candidate => {
+          let dbCategoriesValues = cats.map(cat => cat[directoryIn].toLowerCase());
+          let categoryIndex = dbCategoriesValues.indexOf(candidate.toLowerCase());
+          if (categoryIndex !== -1) {
+            if (categoriesFound.indexOf(cats[categoryIndex][directoryOut]) === -1) {
+              categoriesFound.push(cats[categoryIndex][directoryOut]);
+            }
+          }
+        });
+        return resolve(categoriesFound || false);
+      })
+      .catch(err => reject(err));
+  });
+};
 
 module.exports = {
   find,
-  findBestGcidMatch
+  findBestGcidMatch,
+  getArrayOfMatches
 };
