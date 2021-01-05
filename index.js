@@ -25,6 +25,88 @@ const find = (gcid, directory, done) => {
     });
 };
 
+/*
+    input: 
+    { data:
+        [ 
+          RowDataPacket {
+            TELNO: '(724) 935-2888',
+            LSTNM: 'Haefner Drilling Llc',
+            STRT: '110 Caromar Drive ',
+            LOCNM: 'Mars',
+            STATE: 'PA',
+            ZIP: '16046',
+            hide_address: 'false',
+            gcid: 'well_drilling_contractor',
+            LAT: 40.6857801,
+            LON: -80.02028 
+          },
+          RowDataPacket {
+            TELNO: '(936) 539-2886',
+            LSTNM: 'Inspections Plus & Automotive Repair',
+            STRT: '12222 State Hwy 105 East ',
+            LOCNM: 'Conroe',
+            STATE: 'TX',
+            ZIP: '77303',
+            hide_address: 'false',
+            gcid: 'auto_repair_shop',
+            LAT: 0,
+            LON: 0 
+          }
+        ],
+      directory: 'listyourself
+    }
+  output:
+    [ 
+      RowDataPacket {
+        TELNO: '(724) 935-2888',
+        LSTNM: 'Haefner Drilling Llc',
+        STRT: '110 Caromar Drive ',
+        LOCNM: 'Mars',
+        STATE: 'PA',
+        ZIP: '16046',
+        hide_address: 'false',
+        gcid: 'Water Well Drilling & Service',
+        LAT: 40.6857801,
+        LON: -80.02028 
+      },
+      RowDataPacket {
+        TELNO: '(936) 539-2886',
+        LSTNM: 'Inspections Plus & Automotive Repair',
+        STRT: '12222 State Hwy 105 East ',
+        LOCNM: 'Conroe',
+        STATE: 'TX',
+        ZIP: '77303',
+        hide_address: 'false',
+        gcid: 'Automobile - Repairs & Services',
+        LAT: 0,
+        LON: 0 
+      }
+    ]
+*/
+const findAll = ({ data, directory }) => {
+  return new Promise((resolve, reject) => {
+    return csv()
+      .fromFile(`${__dirname}/taxonomy.csv`)
+      .then(cats => {
+        _.forEach(data, client => {
+          const google = _.filter(cats, { gcid: client.gcid });
+          if (google.length < 1) {
+            client.gcid = null;
+          }
+          else if (_.get(google, `0.${directory}`)) {
+            client.gcid = _.get(google, `0.${directory}`);
+          }
+          else {
+            client.gcid = null;
+          }
+        });
+        return resolve(data);
+      })
+      .catch(err => reject(err));
+  });
+};
+
 // given a directory and array of categories returns the first match
 // example: 
 // input { directory: 'infogroup', categories: ['Educational programs', 'adult Education school', 'schools Adult education academic'] }
@@ -88,6 +170,7 @@ const getArrayOfMatches = ({ directoryIn, directoryOut, categories }) => {
 
 module.exports = {
   find,
+  findAll,
   findBestGcidMatch,
   getArrayOfMatches
 };
