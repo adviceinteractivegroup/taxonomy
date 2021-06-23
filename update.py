@@ -10,8 +10,7 @@ import subprocess
 
 # parse arguments
 parser = argparse.ArgumentParser(description = "Adds or edits a category in the taxonomy")
-parser.add_argument("--add", help='The partner id or email', action='store_true')
-parser.add_argument("--name", help='The name of the category', type=str)
+parser.add_argument("--name", help='The display name of the category', type=str, required=True)
 parser.add_argument("--gcid", help='The cateogry (without the gcid: prefix)', type=str, required=True)
 parser.add_argument("--search", help='Keyword to search for when choosing categories', type=str, required=True)
 args = parser.parse_args()
@@ -27,15 +26,19 @@ def getDirectory(directory):
 
 # show matches for a given set of categories, key, and search criteria
 def filterCats(cats, key, search):
+  #print("")
+  #print("seaerching {} categories for {}".format(len(cats), search))
   results = []
   for cat in cats:
-    subject = cat[key]
+    subject = cat[key].lower()
     if subject.find(search) != -1:
       results.append(subject)
   return results
 
 def displayCats(results):
   index = 1
+  if len(results) > 0:
+    print ("")
   for cat in results:
     print("{}) {}".format(index, json.dumps(cat)))
     index += 1
@@ -49,16 +52,15 @@ with open("taxonomy.csv", "r") as csvfile:
   for cat in cats:
     categories.append(cat)
 
-  if args.add is True:
-    categories.append({'gcid': 'gcid:{}'.format(args.gcid)})
-
-  print ("Supported directories")
   directories = _.keys(categories[0])
-  print(directories)
+  print("Supported directories: {}".format(json.dumps(directories)))
 
   find = _.find(categories, { 'gcid': "gcid:{}".format(args.gcid) })
   if find is None:
-    find = {}
+    find = {'gcid': 'gcid:{}'.format(args.gcid)}
+
+  print("")
+  print("Current config: {}".format(json.dumps(find)))
   
   for directory in directories:
     # handle gcid condition
@@ -73,7 +75,7 @@ with open("taxonomy.csv", "r") as csvfile:
 
     # handle gcid condition
     if directory == 'gcid':
-      find['gcid'] = args.gcid
+      find['gcid'] = "gcid:{}".format(args.gcid)
       continue
 
 
@@ -93,26 +95,38 @@ with open("taxonomy.csv", "r") as csvfile:
     # display selection
     print("")
     print(directory.upper())
-    print("current category: {}".format(find[directory]))
-    matches = filterCats(data['categories'], key, args.search)
-    if len(matches) < 1:
-      print("...no matches for {}".format(directory))
-      continue
+    if _.get(find, directory, None) is not None:
+      print("current category: {}".format(_.get(find, directory, 'None')))
 
-    # if there are matches, choose
-    displayCats(matches)
-    selection = input("Enter a category (or 0 to skip): ")
 
-    if int(selection) > 0:
-      selected = _.get(matches, int(selection) - 1)
-      print("selected: {}".format(selected))
+    # set the initial search criteria
+    selection = args.search
+    
+    while selection != '':
+      matches = filterCats(data['categories'], key, selection)
+      if len(matches) < 1:
+        print("...no matches for {}".format(directory))
+      else:
+        displayCats(matches)
 
-      find[directory] = selected
+      selection = input("\nEnter # or new search term (or ENTER to skip): ")
 
-categories.append(find)
+      # they chopse to skip
+      if selection == '':
+        continue
+
+      if selection.isdigit():
+        selected = _.get(matches, int(selection) - 1)
+        print("selected: {}".format(selected))
+        find[directory] = selected
+        selection = ''
+
 with open("taxonomy.csv", "w") as output:
   writer = csv.DictWriter(output, fieldnames=_.keys(categories[0]))
   writer.writeheader()
-  writer.writerows(categories)
+  for row in categories:
+    if row['gcid'] != "gcid:{}".format(args.gcid):
+      writer.writerow(row)
+  writer.writerow(find)
 
 print("Done")
