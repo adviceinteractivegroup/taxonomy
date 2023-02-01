@@ -10,6 +10,7 @@ import subprocess
 
 # parse arguments
 parser = argparse.ArgumentParser(description = "Adds or edits a category in the taxonomy")
+parser.add_argument("--list", help='Prints out the GCIDs', action='store_true')
 parser.add_argument("--name", help='The display name of the category', type=str, required=True)
 parser.add_argument("--gcid", help='The cateogry (without the gcid: prefix)', type=str, required=True)
 parser.add_argument("--search", help='Keyword to search for when choosing categories', type=str, required=True)
@@ -51,6 +52,12 @@ with open("taxonomy.csv", "r") as csvfile:
   cats = csv.DictReader(csvfile)
   for cat in cats:
     categories.append(cat)
+
+  if args.list is True:
+    for cat in cats:
+      print(cat['gcid'])
+    sys.exit(1)
+
 
   directories = _.keys(categories[0])
   print("Supported directories: {}".format(json.dumps(directories)))
