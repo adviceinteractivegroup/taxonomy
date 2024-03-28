@@ -11,7 +11,7 @@ from firebase_admin import db
 
 pp = pprint.PrettyPrinter(indent=4)
 
-cred = credentials.Certificate("./praxis.json")
+cred = credentials.Certificate("./praxis2.json")
 firebase_admin.initialize_app(cred, {
   'databaseURL': 'https://praxis-m14.firebaseio.com'
   })
