@@ -18,6 +18,7 @@ firebase_admin.initialize_app(cred, {
 
 ref = db.reference("categories/en")
 cats = ref.get()
+gmbcats = {}
 print(f"Before: {len(cats)} categories")
 
 en_cats = []
@@ -28,7 +29,12 @@ with open("taxonomy.csv", "rt") as csvfile:
   for line in lines:
     en_cats.append({ 'gcid': line['gcid'].replace("gcid:", ""), 'google': line['google'] })
     es_cats.append({ 'gcid': line['gcid'].replace("gcid:", ""), 'google': line['googleEs'] })
+    gmbcats[line['gcid']] = line['google']
+
 
   ref.set(en_cats)
   ref = db.reference("categories/es")
   ref.set(es_cats)
+
+  ref = db.reference("gmb_categories")
+  ref.set(gmbcats)
